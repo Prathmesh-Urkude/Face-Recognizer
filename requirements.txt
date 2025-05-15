@@ -1,0 +1,4 @@
+tensorflow
+mtcnn
+facenet
+faiss-cpu
