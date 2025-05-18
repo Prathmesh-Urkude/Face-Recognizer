@@ -62,7 +62,11 @@ id_file = "person_ids.json"
 # Load existing person_id_list
 if os.path.exists(id_file):
     with open(id_file, 'r') as f:
-        person_id_list = json.load(f)
+        try: 
+            person_id_list = json.load(f)
+        except json.JSONDecodeError:
+            print("Error loading person IDs. Starting with an empty list.")
+            person_id_list = []
 else:
     person_id_list = []
    

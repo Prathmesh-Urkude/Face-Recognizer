@@ -23,33 +23,38 @@ def webcam_data():
             print("Empty frame detected")
             continue
         
-        # Detect faces
-        faces = detector.detect_faces(frame)
-        
-        if not faces:
+        try:
+            # Detect faces
+            faces = detector.detect_faces(frame)
+            
+            if not faces:
+                continue
+            
+            for face in faces:
+                x,y,w,h = face['box']
+                cropped_face = frame[y:y+h, x:x+h]
+                
+                if cropped_face is not None or cropped_face.shape[0] == 0:
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 1)
+                    cv2.putText(frame, str(img_id), (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
+                
+                cv2.imshow("Face Detection", frame)
+                
+                if cv2.waitKey(1) & 0xFF == 32:  # Spacebar key
+                    
+                    # Get embedding
+                    embedding = get_embedding(cropped_face) # Should be (512,)
+                    
+                    if embedding is None:
+                        print("Error: Could not get embedding.")
+                        continue
+                    
+                    add_face_to_faiss(embedding, name)
+                    img_id += 1
+            
+        except Exception as e:
+            print(f"Error processing frame: {e}")
             continue
-        
-        for face in faces:
-            x,y,w,h = face['box']
-            cropped_face = frame[y:y+h, x:x+h]
-            
-            if cropped_face is not None:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 1)
-                cv2.putText(frame, str(img_id), (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
-            
-            cv2.imshow("Face Detection", frame)
-            
-            if cv2.waitKey(1) & 0xFF == 32:  # Spacebar key
-                
-                # Get embedding
-                embedding = get_embedding(cropped_face) # Should be (512,)
-                
-                if embedding is None:
-                    print("Error: Could not get embedding.")
-                    continue
-                
-                add_face_to_faiss(embedding, name)
-                img_id += 1
             
         if cv2.waitKey(10) & 0xFF == ord('q') or img_id >= 5: # press 'q' to exit
             break
